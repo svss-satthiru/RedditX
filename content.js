@@ -38,10 +38,24 @@ class RedditPromotedDetector {
 
     console.log('[RedditX] Scanning for promoted content...');
 
-    // Method 1: Check shreddit-post elements with is-promoted attribute (new Reddit)
-    const shredditPromoted = document.querySelectorAll('shreddit-post[is-promoted="true"]');
-    console.log(`[RedditX] [Method 1] Found ${shredditPromoted.length} shreddit-post[is-promoted="true"]`);
-    shredditPromoted.forEach(post => promoted.push(post));
+    // Method 1: Check all shreddit-post elements (combined attribute + text checks)
+    const allShredditPosts = document.querySelectorAll('shreddit-post');
+    console.log(`[RedditX] [Method 1] Checking ${allShredditPosts.length} shreddit-post elements`);
+    allShredditPosts.forEach(post => {
+      // Check 1: is-promoted attribute (fast)
+      if (post.getAttribute('is-promoted') === 'true') {
+        console.log('[RedditX] [Method 1a] Found by is-promoted attribute');
+        promoted.push(post);
+        return; // Early exit, don't need text check
+      }
+
+      // Check 2: Text content (slower, only if attribute check failed)
+      const textContent = post.textContent || '';
+      if (textContent.includes('Promoted')) {
+        console.log('[RedditX] [Method 1b] Found by text match');
+        promoted.push(post);
+      }
+    });
 
     // Method 2: Look for promoted badge in post metadata
     const promotedBadges = document.querySelectorAll('[data-testid="post-container"]');
@@ -62,17 +76,6 @@ class RedditPromotedDetector {
     const promotedClass = document.querySelectorAll('.promoted, .promotedlink');
     console.log(`[RedditX] [Method 4] Found ${promotedClass.length} elements with .promoted or .promotedlink class`);
     promotedClass.forEach(post => promoted.push(post));
-
-    // Method 5: Check all shreddit-post elements for "Promoted" text in their content
-    const allShredditPosts = document.querySelectorAll('shreddit-post');
-    console.log(`[RedditX] [Method 5] Checking ${allShredditPosts.length} shreddit-post elements for "Promoted" text`);
-    allShredditPosts.forEach(post => {
-      const textContent = post.textContent || '';
-      if (textContent.includes('Promoted')) {
-        console.log('[RedditX] [Method 5] Found promoted shreddit-post by text match');
-        promoted.push(post);
-      }
-    });
 
     // Remove duplicates
     const uniquePromoted = [...new Set(promoted)];
