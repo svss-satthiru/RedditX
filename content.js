@@ -5,6 +5,8 @@ class RedditPromotedDetector {
     this.promotedPosts = new Set();
     this.observer = null;
     this.debounceTimer = null;
+    this.adBlockCounter = 0; // Track total ads blocked for stats counter style
+    this.currentStyle = 'stats'; // Default style
   }
 
   // Debug function to inspect post structure
@@ -212,36 +214,148 @@ class RedditPromotedDetector {
     };
   }
 
+  // Generate placeholder HTML based on selected style
+  generatePlaceholder(postInfo, style) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'promoted-removed-placeholder promoted-removed';
+
+    switch (style) {
+      case 'minimal':
+        placeholder.style.cssText = `
+          padding: 8px 12px;
+          text-align: left;
+          color: #999;
+          font-size: 11px;
+          background: #f5f5f5;
+          border-left: 3px solid #ff4500;
+          margin: 5px 0;
+        `;
+        placeholder.textContent = '🚫 Ad removed';
+        break;
+
+      case 'card':
+        placeholder.style.cssText = `
+          padding: 20px;
+          background: white;
+          border-radius: 12px;
+          border: 1px solid #e0e0e0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          margin: 16px 0;
+        `;
+        placeholder.innerHTML = `
+          <div style="font-weight: 600; color: #333; margin-bottom: 8px;">🎯 Promoted Post Removed</div>
+          <div style="font-size: 12px; color: #666;">"${this.escapeHtml(postInfo.title)}"</div>
+        `;
+        break;
+
+      case 'success':
+        placeholder.style.cssText = `
+          padding: 16px;
+          background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%);
+          border-left: 4px solid #48bb78;
+          border-radius: 4px;
+          color: #2f855a;
+          font-size: 13px;
+          margin: 10px 0;
+        `;
+        placeholder.innerHTML = `
+          ✅ Advertisement blocked<br>
+          <div style="font-size: 11px; margin-top: 4px;">RedditX is protecting you</div>
+        `;
+        break;
+
+      case 'ghost':
+        placeholder.style.cssText = `
+          padding: 12px;
+          text-align: center;
+          color: #ccc;
+          font-size: 11px;
+          background: transparent;
+          border: 1px dashed #ddd;
+          border-radius: 4px;
+          margin: 8px 0;
+          opacity: 0.6;
+        `;
+        placeholder.textContent = '[Sponsored content hidden]';
+        break;
+
+      case 'stats':
+        this.adBlockCounter++;
+        placeholder.style.cssText = `
+          padding: 12px 16px;
+          background: #1a1a1b;
+          color: #ff4500;
+          font-weight: 600;
+          font-size: 12px;
+          border-radius: 6px;
+          text-align: left;
+          margin: 10px 0;
+        `;
+        placeholder.innerHTML = `
+          🛡️ AD BLOCKED (#${this.adBlockCounter})<br>
+          <div style="font-size: 10px; color: #818384; margin-top: 4px;">by RedditX</div>
+        `;
+        break;
+
+      case 'line':
+        placeholder.style.cssText = `
+          padding: 8px;
+          text-align: center;
+          color: #999;
+          font-size: 11px;
+          background: transparent;
+          border-top: 1px solid #e0e0e0;
+          border-bottom: 1px solid #e0e0e0;
+          margin: 10px 0;
+        `;
+        placeholder.textContent = '───── 🎯 Promoted content removed ─────';
+        break;
+
+      case 'none':
+        placeholder.style.cssText = 'display: none;';
+        break;
+
+      default:
+        // Fallback to stats style
+        this.adBlockCounter++;
+        placeholder.style.cssText = `
+          padding: 12px 16px;
+          background: #1a1a1b;
+          color: #ff4500;
+          font-weight: 600;
+          font-size: 12px;
+          border-radius: 6px;
+          text-align: left;
+          margin: 10px 0;
+        `;
+        placeholder.innerHTML = `
+          🛡️ AD BLOCKED (#${this.adBlockCounter})<br>
+          <div style="font-size: 10px; color: #818384; margin-top: 4px;">by RedditX</div>
+        `;
+    }
+
+    return placeholder;
+  }
+
+  // Helper function to escape HTML
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Automatically remove promoted posts by replacing with placeholder
   highlightPromotedPosts(posts) {
     posts.forEach(post => {
       if (!post.classList.contains('promoted-removed')) {
-        console.log('[RedditX] Removing promoted post:', post.outerHTML.substring(0, 100));
+        console.log('[RedditX] Removing promoted post:', post);
 
         // Store post info before removing
         const postInfo = this.extractPostInfo(post);
         this.promotedPosts.add(JSON.stringify(postInfo));
 
-        // Create a placeholder div to replace the promoted post
-        const placeholder = document.createElement('div');
-        placeholder.className = 'promoted-removed-placeholder promoted-removed';
-        placeholder.style.cssText = `
-          padding: 20px;
-          text-align: center;
-          color: #818384;
-          font-size: 14px;
-          background: rgba(255, 69, 0, 0.05);
-          border: 2px dashed #ff4500;
-          border-radius: 8px;
-          margin: 10px 0;
-        `;
-        // Create escaped title
-        const titleDiv = document.createElement('div');
-        titleDiv.style.cssText = 'font-size: 12px; color: #666; margin-top: 8px;';
-        titleDiv.textContent = postInfo.title || 'Sponsored post';
-
-        placeholder.innerHTML = '<div style="margin-bottom: 8px;">🎯 Promoted content removed</div>';
-        placeholder.appendChild(titleDiv);
+        // Generate placeholder based on current style
+        const placeholder = this.generatePlaceholder(postInfo, this.currentStyle);
 
         // Replace the promoted post with the placeholder
         if (post.parentNode) {
@@ -343,8 +457,37 @@ class RedditPromotedDetector {
     });
   }
 
+  // Load placeholder style from storage
+  loadPlaceholderStyle() {
+    chrome.storage.local.get(['placeholderStyle'], (result) => {
+      this.currentStyle = result.placeholderStyle || 'stats';
+      console.log(`[RedditX] Loaded placeholder style: ${this.currentStyle}`);
+    });
+  }
+
+  // Update all existing placeholders with new style
+  updateAllPlaceholders(newStyle) {
+    this.currentStyle = newStyle;
+    console.log(`[RedditX] Updating to new placeholder style: ${newStyle}`);
+
+    // Find all existing placeholders and replace them
+    const existingPlaceholders = document.querySelectorAll('.promoted-removed-placeholder');
+    existingPlaceholders.forEach(placeholder => {
+      // Create a dummy post info for regeneration
+      const postInfo = { title: 'Promoted Post' };
+      const newPlaceholder = this.generatePlaceholder(postInfo, newStyle);
+
+      if (placeholder.parentNode) {
+        placeholder.parentNode.replaceChild(newPlaceholder, placeholder);
+      }
+    });
+  }
+
   // Initialize detector
   init() {
+    // Load saved style preference first
+    this.loadPlaceholderStyle();
+
     // Debug on first run
     setTimeout(() => {
       this.debugPostStructure();
@@ -388,6 +531,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       chrome.storage.local.get(['count'], (result) => {
         sendResponse({ count: result.count || 0 });
       });
+      return true;
+    }
+
+    if (request.action === 'updatePlaceholderStyle') {
+      console.log(`[RedditX] Received style update request: ${request.style}`);
+      if (detectorInstance) {
+        detectorInstance.updateAllPlaceholders(request.style);
+        sendResponse({ success: true });
+      } else {
+        sendResponse({ success: false, error: 'Detector not initialized' });
+      }
       return true;
     }
   } catch (error) {

@@ -31,6 +31,46 @@
       margin-bottom: 5px;
     }
 
+    /* Tab Navigation */
+    .tabs {
+      display: flex;
+      background: #272729;
+      border-bottom: 2px solid #343536;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #818384;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab:hover {
+      background: #2a2a2b;
+      color: #d7dadc;
+    }
+
+    .tab.active {
+      color: #ff4500;
+      border-bottom-color: #ff4500;
+      background: #1a1a1b;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Stats Tab */
     .stats {
       display: flex;
       justify-content: space-around;
@@ -100,6 +140,109 @@
       margin-bottom: 10px;
     }
 
+    /* Settings Tab */
+    .settings-container {
+      padding: 20px;
+    }
+
+    .setting-section {
+      margin-bottom: 25px;
+    }
+
+    .setting-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #d7dadc;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .setting-description {
+      font-size: 12px;
+      color: #818384;
+      margin-bottom: 12px;
+    }
+
+    .style-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .style-option {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: #272729;
+      border: 2px solid #343536;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .style-option:hover {
+      border-color: #ff4500;
+      background: #2a2a2b;
+    }
+
+    .style-option.selected {
+      border-color: #ff4500;
+      background: rgba(255, 69, 0, 0.1);
+    }
+
+    .style-option input[type="radio"] {
+      margin-right: 12px;
+      cursor: pointer;
+      accent-color: #ff4500;
+    }
+
+    .style-option-content {
+      flex: 1;
+    }
+
+    .style-option-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #d7dadc;
+      margin-bottom: 4px;
+    }
+
+    .style-option-desc {
+      font-size: 11px;
+      color: #818384;
+    }
+
+    .style-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: #ff4500;
+      color: white;
+      border-radius: 3px;
+      margin-left: 8px;
+    }
+
+    /* Preview Section */
+    .preview-section {
+      margin-top: 15px;
+      padding: 15px;
+      background: #272729;
+      border-radius: 8px;
+      border: 1px solid #343536;
+    }
+
+    .preview-label {
+      font-size: 12px;
+      color: #818384;
+      margin-bottom: 10px;
+    }
+
+    .preview-box {
+      padding: 10px;
+      background: #1a1a1b;
+      border-radius: 4px;
+    }
+
+    /* Footer */
     .footer {
       padding: 15px;
       text-align: center;
@@ -126,7 +269,6 @@
     .refresh-btn:hover {
       background: #ff5700;
     }
-
 
     .loading {
       text-align: center;
@@ -157,23 +299,112 @@
     <h1>🎯 RedditX</h1>
   </div>
 
-  <div class="stats">
-    <div class="stat-item">
-      <div class="stat-number" id="promotedCount">0</div>
-      <div class="stat-label">Promoted Posts</div>
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <div class="tab active" data-tab="stats">Stats</div>
+    <div class="tab" data-tab="settings">Settings</div>
+  </div>
+
+  <!-- Stats Tab -->
+  <div class="tab-content active" id="stats-tab">
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-number" id="promotedCount">0</div>
+        <div class="stat-label">Promoted Posts</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number" id="lastUpdate">-</div>
+        <div class="stat-label">Last Updated</div>
+      </div>
     </div>
-    <div class="stat-item">
-      <div class="stat-number" id="lastUpdate">-</div>
-      <div class="stat-label">Last Updated</div>
+
+    <div class="content" id="postsList">
+      <div class="loading">Loading...</div>
+    </div>
+
+    <div class="footer">
+      <button class="btn refresh-btn" id="refreshBtn">Refresh</button>
     </div>
   </div>
 
-  <div class="content" id="postsList">
-    <div class="loading">Loading...</div>
-  </div>
+  <!-- Settings Tab -->
+  <div class="tab-content" id="settings-tab">
+    <div class="settings-container">
+      <div class="setting-section">
+        <label class="setting-label">Placeholder Style</label>
+        <div class="setting-description">
+          Choose how removed promoted posts are displayed
+        </div>
 
-  <div class="footer">
-    <button class="btn refresh-btn" id="refreshBtn">Refresh</button>
+        <div class="style-options">
+          <label class="style-option" data-style="minimal">
+            <input type="radio" name="placeholderStyle" value="minimal">
+            <div class="style-option-content">
+              <div class="style-option-name">Minimal/Compact</div>
+              <div class="style-option-desc">Small, takes minimal space</div>
+            </div>
+          </label>
+
+          <label class="style-option" data-style="card">
+            <input type="radio" name="placeholderStyle" value="card">
+            <div class="style-option-content">
+              <div class="style-option-name">Card with Shadow</div>
+              <div class="style-option-desc">Modern card design</div>
+            </div>
+          </label>
+
+          <label class="style-option" data-style="success">
+            <input type="radio" name="placeholderStyle" value="success">
+            <div class="style-option-content">
+              <div class="style-option-name">Success/Checkmark</div>
+              <div class="style-option-desc">Positive reinforcement style</div>
+            </div>
+          </label>
+
+          <label class="style-option" data-style="ghost">
+            <input type="radio" name="placeholderStyle" value="ghost">
+            <div class="style-option-content">
+              <div class="style-option-name">Ghost/Transparent</div>
+              <div class="style-option-desc">Very subtle, almost invisible</div>
+            </div>
+          </label>
+
+          <label class="style-option" data-style="stats">
+            <input type="radio" name="placeholderStyle" value="stats">
+            <div class="style-option-content">
+              <div class="style-option-name">
+                Stats Counter
+                <span class="style-badge">DEFAULT</span>
+              </div>
+              <div class="style-option-desc">Shows blocked count with shield icon</div>
+            </div>
+          </label>
+
+          <label class="style-option" data-style="line">
+            <input type="radio" name="placeholderStyle" value="line">
+            <div class="style-option-content">
+              <div class="style-option-name">Single Line Banner</div>
+              <div class="style-option-desc">Minimal height horizontal line</div>
+            </div>
+          </label>
+
+          <label class="style-option" data-style="none">
+            <input type="radio" name="placeholderStyle" value="none">
+            <div class="style-option-content">
+              <div class="style-option-name">No Visual Indicator</div>
+              <div class="style-option-desc">Remove completely, no placeholder</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="preview-section">
+          <div class="preview-label">Preview</div>
+          <div class="preview-box" id="stylePreview">
+            <!-- Preview will be dynamically generated -->
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="popup.js"></script>

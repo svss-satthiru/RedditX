@@ -1,5 +1,122 @@
 // Popup script for RedditX
 
+// ===== Tab Management =====
+function initTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.getAttribute('data-tab');
+
+      // Remove active class from all tabs and contents
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(tc => tc.classList.remove('active'));
+
+      // Add active class to clicked tab and corresponding content
+      tab.classList.add('active');
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    });
+  });
+}
+
+// ===== Settings Management =====
+const STYLE_PREVIEWS = {
+  minimal: `
+    <div style="padding: 8px 12px; text-align: left; color: #999; font-size: 11px; background: #f5f5f5; border-left: 3px solid #ff4500; margin: 5px 0;">
+      🚫 Ad removed
+    </div>
+  `,
+  card: `
+    <div style="padding: 20px; background: white; border-radius: 12px; border: 1px solid #e0e0e0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 16px 0;">
+      <div style="font-weight: 600; color: #333; margin-bottom: 8px;">🎯 Promoted Post Removed</div>
+      <div style="font-size: 12px; color: #666;">"Example post title"</div>
+    </div>
+  `,
+  success: `
+    <div style="padding: 16px; background: linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%); border-left: 4px solid #48bb78; border-radius: 4px; color: #2f855a; font-size: 13px; margin: 10px 0;">
+      ✅ Advertisement blocked<br>
+      <div style="font-size: 11px; margin-top: 4px;">RedditX is protecting you</div>
+    </div>
+  `,
+  ghost: `
+    <div style="padding: 12px; text-align: center; color: #ccc; font-size: 11px; background: transparent; border: 1px dashed #ddd; border-radius: 4px; margin: 8px 0; opacity: 0.6;">
+      [Sponsored content hidden]
+    </div>
+  `,
+  stats: `
+    <div style="padding: 12px 16px; background: #1a1a1b; color: #ff4500; font-weight: 600; font-size: 12px; border-radius: 6px; text-align: left; margin: 10px 0;">
+      🛡️ AD BLOCKED (#3)<br>
+      <div style="font-size: 10px; color: #818384; margin-top: 4px;">by RedditX</div>
+    </div>
+  `,
+  line: `
+    <div style="padding: 8px; text-align: center; color: #999; font-size: 11px; background: transparent; border-top: 1px solid #e0e0e0; border-bottom: 1px solid #e0e0e0; margin: 10px 0;">
+      ───── 🎯 Promoted content removed ─────
+    </div>
+  `,
+  none: `
+    <div style="padding: 20px; text-align: center; color: #666; font-size: 12px; font-style: italic;">
+      No visual placeholder<br>
+      <div style="font-size: 10px; margin-top: 8px;">(Post removed completely)</div>
+    </div>
+  `
+};
+
+function initSettings() {
+  const styleOptions = document.querySelectorAll('.style-option');
+  const previewBox = document.getElementById('stylePreview');
+
+  // Load saved setting or use default
+  chrome.storage.local.get(['placeholderStyle'], (result) => {
+    const savedStyle = result.placeholderStyle || 'stats';
+
+    // Set the radio button and visual selection
+    const savedOption = document.querySelector(`.style-option[data-style="${savedStyle}"]`);
+    if (savedOption) {
+      savedOption.classList.add('selected');
+      savedOption.querySelector('input[type="radio"]').checked = true;
+      updatePreview(savedStyle);
+    }
+  });
+
+  // Handle style option selection
+  styleOptions.forEach(option => {
+    option.addEventListener('click', () => {
+      const style = option.getAttribute('data-style');
+      const radio = option.querySelector('input[type="radio"]');
+
+      // Update visual selection
+      styleOptions.forEach(opt => opt.classList.remove('selected'));
+      option.classList.add('selected');
+      radio.checked = true;
+
+      // Update preview
+      updatePreview(style);
+
+      // Save setting immediately
+      chrome.storage.local.set({ placeholderStyle: style }, () => {
+        console.log(`[RedditX] Saved placeholder style: ${style}`);
+
+        // Notify content script to update style
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0] && tabs[0].url && tabs[0].url.includes('reddit.com')) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: 'updatePlaceholderStyle',
+              style: style
+            });
+          }
+        });
+      });
+    });
+  });
+
+  function updatePreview(style) {
+    previewBox.innerHTML = STYLE_PREVIEWS[style] || STYLE_PREVIEWS.stats;
+  }
+}
+
+// ===== Stats Tab Functions =====
 function formatTimeAgo(timestamp) {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
 
@@ -78,8 +195,12 @@ function loadPosts() {
   });
 }
 
-// Load posts on popup open
-loadPosts();
+// ===== Initialization =====
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs();
+  initSettings();
+  loadPosts();
+});
 
 // Refresh button
 document.getElementById('refreshBtn').addEventListener('click', () => {
