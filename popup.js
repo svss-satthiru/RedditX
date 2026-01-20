@@ -64,35 +64,51 @@ const STYLE_PREVIEWS = {
 };
 
 function initSettings() {
-  const styleOptions = document.querySelectorAll('.style-option');
+  const dropdownSelected = document.getElementById('dropdownSelected');
+  const dropdownOptions = document.getElementById('dropdownOptions');
   const previewBox = document.getElementById('stylePreview');
+  const allOptions = document.querySelectorAll('.dropdown-option');
+
+  // Style name mapping for display
+  const styleNames = {
+    'stats': '🛡️ Stats Counter (Default)',
+    'minimal': '🚫 Minimal/Compact',
+    'card': '🎯 Card with Shadow',
+    'success': '✅ Success/Checkmark',
+    'ghost': '👻 Ghost/Transparent',
+    'line': '─ Single Line Banner',
+    'none': '∅ No Visual Indicator'
+  };
 
   // Load saved setting or use default
   chrome.storage.local.get(['placeholderStyle'], (result) => {
     const savedStyle = result.placeholderStyle || 'stats';
+    updateSelectedStyle(savedStyle);
+    updatePreview(savedStyle);
+  });
 
-    // Set the radio button and visual selection
-    const savedOption = document.querySelector(`.style-option[data-style="${savedStyle}"]`);
-    if (savedOption) {
-      savedOption.classList.add('selected');
-      savedOption.querySelector('input[type="radio"]').checked = true;
-      updatePreview(savedStyle);
+  // Toggle dropdown on click
+  dropdownSelected.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isActive = dropdownSelected.classList.contains('active');
+
+    if (isActive) {
+      closeDropdown();
+    } else {
+      openDropdown();
     }
   });
 
-  // Handle style option selection
-  styleOptions.forEach(option => {
-    option.addEventListener('click', () => {
+  // Handle option selection
+  allOptions.forEach(option => {
+    option.addEventListener('click', (e) => {
+      e.stopPropagation();
       const style = option.getAttribute('data-style');
-      const radio = option.querySelector('input[type="radio"]');
 
-      // Update visual selection
-      styleOptions.forEach(opt => opt.classList.remove('selected'));
-      option.classList.add('selected');
-      radio.checked = true;
-
-      // Update preview
+      // Update UI
+      updateSelectedStyle(style);
       updatePreview(style);
+      closeDropdown();
 
       // Save setting immediately
       chrome.storage.local.set({ placeholderStyle: style }, () => {
@@ -110,6 +126,38 @@ function initSettings() {
       });
     });
   });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownSelected.contains(e.target) && !dropdownOptions.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  function updateSelectedStyle(style) {
+    // Update selected text
+    const selectedText = dropdownSelected.querySelector('.dropdown-text');
+    selectedText.textContent = styleNames[style] || styleNames.stats;
+
+    // Update checkmarks
+    allOptions.forEach(opt => {
+      if (opt.getAttribute('data-style') === style) {
+        opt.classList.add('selected');
+      } else {
+        opt.classList.remove('selected');
+      }
+    });
+  }
+
+  function openDropdown() {
+    dropdownSelected.classList.add('active');
+    dropdownOptions.classList.add('show');
+  }
+
+  function closeDropdown() {
+    dropdownSelected.classList.remove('active');
+    dropdownOptions.classList.remove('show');
+  }
 
   function updatePreview(style) {
     previewBox.innerHTML = STYLE_PREVIEWS[style] || STYLE_PREVIEWS.stats;

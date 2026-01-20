@@ -163,62 +163,110 @@
       margin-bottom: 12px;
     }
 
-    .style-options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* Custom Dropdown Styles */
+    .custom-dropdown {
+      position: relative;
+      width: 100%;
     }
 
-    .style-option {
+    .dropdown-selected {
       display: flex;
       align-items: center;
-      padding: 12px;
+      justify-content: space-between;
+      padding: 12px 16px;
       background: #272729;
       border: 2px solid #343536;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
+      user-select: none;
     }
 
-    .style-option:hover {
+    .dropdown-selected:hover {
       border-color: #ff4500;
       background: #2a2a2b;
     }
 
-    .style-option.selected {
+    .dropdown-selected.active {
       border-color: #ff4500;
-      background: rgba(255, 69, 0, 0.1);
+      border-radius: 8px 8px 0 0;
     }
 
-    .style-option input[type="radio"] {
-      margin-right: 12px;
-      cursor: pointer;
-      accent-color: #ff4500;
-    }
-
-    .style-option-content {
-      flex: 1;
-    }
-
-    .style-option-name {
+    .dropdown-text {
       font-size: 13px;
       font-weight: 500;
       color: #d7dadc;
-      margin-bottom: 4px;
     }
 
-    .style-option-desc {
-      font-size: 11px;
+    .dropdown-arrow {
       color: #818384;
+      font-size: 10px;
+      transition: transform 0.2s;
     }
 
-    .style-badge {
-      font-size: 10px;
-      padding: 2px 6px;
-      background: #ff4500;
-      color: white;
-      border-radius: 3px;
-      margin-left: 8px;
+    .dropdown-selected.active .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-options {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #272729;
+      border: 2px solid #ff4500;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      z-index: 1000;
+    }
+
+    .dropdown-options.show {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .dropdown-option {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+      gap: 10px;
+    }
+
+    .dropdown-option:hover {
+      background: #2a2a2b;
+    }
+
+    .dropdown-option.selected {
+      background: rgba(255, 69, 0, 0.1);
+    }
+
+    .option-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .option-text {
+      flex: 1;
+      font-size: 13px;
+      color: #d7dadc;
+    }
+
+    .option-checkmark {
+      color: #ff4500;
+      font-weight: bold;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .dropdown-option.selected .option-checkmark {
+      opacity: 1;
     }
 
     /* Preview Section */
@@ -336,65 +384,48 @@
           Choose how removed promoted posts are displayed
         </div>
 
-        <div class="style-options">
-          <label class="style-option" data-style="minimal">
-            <input type="radio" name="placeholderStyle" value="minimal">
-            <div class="style-option-content">
-              <div class="style-option-name">Minimal/Compact</div>
-              <div class="style-option-desc">Small, takes minimal space</div>
+        <div class="custom-dropdown">
+          <div class="dropdown-selected" id="dropdownSelected">
+            <span class="dropdown-text">🛡️ Stats Counter (Default)</span>
+            <span class="dropdown-arrow">▼</span>
+          </div>
+          <div class="dropdown-options" id="dropdownOptions">
+            <div class="dropdown-option" data-style="stats">
+              <span class="option-icon">🛡️</span>
+              <span class="option-text">Stats Counter (Default)</span>
+              <span class="option-checkmark">✓</span>
             </div>
-          </label>
-
-          <label class="style-option" data-style="card">
-            <input type="radio" name="placeholderStyle" value="card">
-            <div class="style-option-content">
-              <div class="style-option-name">Card with Shadow</div>
-              <div class="style-option-desc">Modern card design</div>
+            <div class="dropdown-option" data-style="minimal">
+              <span class="option-icon">🚫</span>
+              <span class="option-text">Minimal/Compact</span>
+              <span class="option-checkmark">✓</span>
             </div>
-          </label>
-
-          <label class="style-option" data-style="success">
-            <input type="radio" name="placeholderStyle" value="success">
-            <div class="style-option-content">
-              <div class="style-option-name">Success/Checkmark</div>
-              <div class="style-option-desc">Positive reinforcement style</div>
+            <div class="dropdown-option" data-style="card">
+              <span class="option-icon">🎯</span>
+              <span class="option-text">Card with Shadow</span>
+              <span class="option-checkmark">✓</span>
             </div>
-          </label>
-
-          <label class="style-option" data-style="ghost">
-            <input type="radio" name="placeholderStyle" value="ghost">
-            <div class="style-option-content">
-              <div class="style-option-name">Ghost/Transparent</div>
-              <div class="style-option-desc">Very subtle, almost invisible</div>
+            <div class="dropdown-option" data-style="success">
+              <span class="option-icon">✅</span>
+              <span class="option-text">Success/Checkmark</span>
+              <span class="option-checkmark">✓</span>
             </div>
-          </label>
-
-          <label class="style-option" data-style="stats">
-            <input type="radio" name="placeholderStyle" value="stats">
-            <div class="style-option-content">
-              <div class="style-option-name">
-                Stats Counter
-                <span class="style-badge">DEFAULT</span>
-              </div>
-              <div class="style-option-desc">Shows blocked count with shield icon</div>
+            <div class="dropdown-option" data-style="ghost">
+              <span class="option-icon">👻</span>
+              <span class="option-text">Ghost/Transparent</span>
+              <span class="option-checkmark">✓</span>
             </div>
-          </label>
-
-          <label class="style-option" data-style="line">
-            <input type="radio" name="placeholderStyle" value="line">
-            <div class="style-option-content">
-              <div class="style-option-name">Single Line Banner</div>
-              <div class="style-option-desc">Minimal height horizontal line</div>
+            <div class="dropdown-option" data-style="line">
+              <span class="option-icon">─</span>
+              <span class="option-text">Single Line Banner</span>
+              <span class="option-checkmark">✓</span>
             </div>
-          </label>
-
-          <label class="style-option" data-style="none">
-            <input type="radio" name="placeholderStyle" value="none">
-            <div class="style-option-content">
-              <div class="style-option-name">No Visual Indicator</div>
-              <div class="style-option-desc">Remove completely, no placeholder</div>
+            <div class="dropdown-option" data-style="none">
+              <span class="option-icon">∅</span>
+              <span class="option-text">No Visual Indicator</span>
+              <span class="option-checkmark">✓</span>
             </div>
-          </label>
+          </div>
         </div>
 
         <div class="preview-section">
