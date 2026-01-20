@@ -1,0 +1,99 @@
+/* Styles for highlighting promoted posts on Reddit */
+
+.promoted-highlighted {
+  position: relative;
+  border: 3px solid #ff4500 !important;
+  border-radius: 8px !important;
+  background: linear-gradient(135deg, rgba(255, 69, 0, 0.1) 0%, rgba(255, 87, 0, 0.05) 100%) !important;
+  box-shadow: 0 0 20px rgba(255, 69, 0, 0.3) !important;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 69, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
+  }
+}
+
+.promoted-detector-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: linear-gradient(135deg, #ff4500 0%, #ff5700 100%);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: slide-in 0.3s ease-out;
+  letter-spacing: 0.5px;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* For old Reddit */
+.thing.promoted.promoted-highlighted {
+  background-color: rgba(255, 69, 0, 0.1) !important;
+}
+
+/* For new Reddit shreddit-post elements */
+shreddit-post.promoted-highlighted {
+  outline: 3px solid #ff4500 !important;
+  outline-offset: 2px;
+}
+
+/* Ensure badge is visible on different Reddit themes */
+[data-theme="dark"] .promoted-detector-badge,
+.theme-dark .promoted-detector-badge {
+  background: linear-gradient(135deg, #ff4500 0%, #ff5700 100%);
+  color: white;
+}
+
+[data-theme="light"] .promoted-detector-badge,
+.theme-light .promoted-detector-badge {
+  background: linear-gradient(135deg, #ff4500 0%, #ff5700 100%);
+  color: white;
+}
+
+/* Hover effect for promoted posts */
+.promoted-highlighted:hover {
+  transform: scale(1.01);
+  transition: transform 0.2s ease-out;
+}
+
+/* Additional styling for clarity */
+.promoted-highlighted::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ff4500, #ff5700, #ff4500);
+  z-index: -1;
+  animation: gradient-rotate 3s linear infinite;
+}
+
+@keyframes gradient-rotate {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}
