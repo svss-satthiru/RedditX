@@ -4,6 +4,7 @@ class RedditPromotedDetector {
   constructor() {
     this.promotedPosts = new Set();
     this.observer = null;
+    this.debounceTimer = null;
   }
 
   // Debug function to inspect post structure
@@ -283,27 +284,57 @@ class RedditPromotedDetector {
 
   // Start observing for dynamically loaded content
   startObserver() {
-    console.log('[RedditX] starting MutationObserver for dynamic content');
+    console.log('[RedditX] starting MutationObserver for dynamic content (WITH DEBOUNCING)');
+
+    let mutationCounter = 0; // Track number of times observer fires
+    let batchedMutations = []; // Store mutations for batching
 
     this.observer = new MutationObserver((mutations) => {
-      // Check if new posts were added
-      const addedNodes = [];
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === 1) { // Element nodes only
-            addedNodes.push(node);
-          }
-        });
-      });
+      mutationCounter++;
+      const timestamp = new Date().toISOString().substring(11, 23); // Get time with ms
 
-      if (addedNodes.length > 0) {
-        // Only check the new nodes, not the entire page
-        const promoted = this.checkNewNodes(addedNodes);
-        if (promoted.length > 0) {
-          console.log(`[RedditX] MutationObserver: Processing ${promoted.length} promoted posts from new nodes`);
-          this.highlightPromotedPosts(promoted);
+      console.log(`[RedditX] [${timestamp}] MutationObserver fired (call #${mutationCounter}) with ${mutations.length} mutation(s) - debouncing...`);
+
+      // Add mutations to batch
+      batchedMutations.push(...mutations);
+
+      // Clear existing timer
+      clearTimeout(this.debounceTimer);
+
+      // Set new timer to process after 300ms of inactivity
+      this.debounceTimer = setTimeout(() => {
+        const processingTimestamp = new Date().toISOString().substring(11, 23);
+        console.log(`[RedditX] [${processingTimestamp}] DEBOUNCE COMPLETE - Processing ${batchedMutations.length} batched mutation(s) from ${mutationCounter} observer calls`);
+
+        // Check if new posts were added
+        const addedNodes = [];
+        batchedMutations.forEach(mutation => {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) { // Element nodes only
+              addedNodes.push(node);
+            }
+          });
+        });
+
+        if (addedNodes.length > 0) {
+          console.log(`[RedditX] [${processingTimestamp}] Processing ${addedNodes.length} new node(s) from batched mutations`);
+
+          // Only check the new nodes, not the entire page
+          const promoted = this.checkNewNodes(addedNodes);
+          if (promoted.length > 0) {
+            console.log(`[RedditX] [${processingTimestamp}] MutationObserver: Processing ${promoted.length} promoted posts from new nodes`);
+            this.highlightPromotedPosts(promoted);
+          } else {
+            console.log(`[RedditX] [${processingTimestamp}] No promoted posts found in this batch`);
+          }
+        } else {
+          console.log(`[RedditX] [${processingTimestamp}] No element nodes added in batched mutations`);
         }
-      }
+
+        // Reset for next batch
+        batchedMutations = [];
+        mutationCounter = 0;
+      }, 300);
     });
 
     this.observer.observe(document.body, {
