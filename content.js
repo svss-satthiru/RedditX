@@ -41,46 +41,24 @@ class RedditPromotedDetector {
 
     console.log('[RedditX] Scanning for promoted content...');
 
-    // Method 1: Check all shreddit-post elements (combined attribute + text checks)
-    const allShredditPosts = document.querySelectorAll('shreddit-post');
-    console.log(`[RedditX] [Method 1] Checking ${allShredditPosts.length} shreddit-post elements`);
-    allShredditPosts.forEach(post => {
-      // Check 1: is-promoted attribute (fast)
-      if (post.getAttribute('is-promoted') === 'true') {
-        console.log('[RedditX] [Method 1a] Found by is-promoted attribute');
-        promoted.push(post);
-        return; // Early exit, don't need text check
-      }
+    // Query for all potential promoted post containers
+    const potentialPosts = [
+      ...document.querySelectorAll('shreddit-post'),
+      ...document.querySelectorAll('[data-testid="post-container"]'),
+      ...document.querySelectorAll('[data-promoted="true"]'),
+      ...document.querySelectorAll('.promoted, .promotedlink')
+    ];
 
-      // Check 2: Text content (slower, only if attribute check failed)
-      const textContent = post.textContent || '';
-      if (textContent.includes('Promoted')) {
-        console.log('[RedditX] [Method 1b] Found by text match');
-        promoted.push(post);
+    console.log(`[RedditX] Checking ${potentialPosts.length} potential promoted elements`);
+
+    // Use isPromotedPost() for consistent detection logic
+    potentialPosts.forEach(element => {
+      if (this.isPromotedPost(element)) {
+        promoted.push(element);
       }
     });
 
-    // Method 2: Look for promoted badge in post metadata
-    const promotedBadges = document.querySelectorAll('[data-testid="post-container"]');
-    promotedBadges.forEach(container => {
-      const textContent = container.textContent || '';
-      if (textContent.includes('Promoted')) {
-        console.log('[RedditX] [Method 2] Found promoted post by text content');
-        promoted.push(container);
-      }
-    });
-
-    // Method 3: Check for data-promoted attribute (old Reddit style)
-    const dataPromoted = document.querySelectorAll('[data-promoted="true"]');
-    console.log(`[RedditX] [Method 3] Found ${dataPromoted.length} [data-promoted="true"]`);
-    dataPromoted.forEach(post => promoted.push(post));
-
-    // Method 4: Check for promoted class
-    const promotedClass = document.querySelectorAll('.promoted, .promotedlink');
-    console.log(`[RedditX] [Method 4] Found ${promotedClass.length} elements with .promoted or .promotedlink class`);
-    promotedClass.forEach(post => promoted.push(post));
-
-    // Remove duplicates
+    // Remove duplicates (same element may be found by multiple selectors)
     const uniquePromoted = [...new Set(promoted)];
     console.log(`[RedditX] Total promoted posts found: ${uniquePromoted.length}`);
 
