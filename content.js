@@ -10,11 +10,11 @@ class RedditPromotedDetector {
   debugPostStructure() {
     const samplePost = document.querySelector('shreddit-post');
     if (samplePost) {
-      console.log('[DEBUG] Sample shreddit-post attributes:');
+      console.log('[RedditX] [DEBUG] Sample shreddit-post attributes:');
       for (let attr of samplePost.attributes) {
-        console.log(`  ${attr.name}: ${attr.value}`);
+        console.log(`[RedditX]   ${attr.name}: ${attr.value}`);
       }
-      console.log('[DEBUG] Sample post HTML (first 500 chars):', samplePost.innerHTML.substring(0, 500));
+      console.log('[RedditX] [DEBUG] Sample post HTML (first 500 chars):', samplePost.innerHTML.substring(0, 500));
     }
 
     // Check for any elements with "promoted" in their attributes
@@ -25,7 +25,7 @@ class RedditPromotedDetector {
         if (attr.name.toLowerCase().includes('promo') || attr.value.toLowerCase().includes('promo')) {
           promotedElements.push({ tag: el.tagName, attr: attr.name, value: attr.value });
           if (promotedElements.length < 5) {
-            console.log(`[DEBUG] Found element with promo: <${el.tagName} ${attr.name}="${attr.value}">`);
+            console.log(`[RedditX] [DEBUG] Found element with promo: <${el.tagName} ${attr.name}="${attr.value}">`);
           }
         }
       }
@@ -40,7 +40,7 @@ class RedditPromotedDetector {
 
     // Method 1: Check shreddit-post elements with is-promoted attribute (new Reddit)
     const shredditPromoted = document.querySelectorAll('shreddit-post[is-promoted="true"]');
-    console.log(`[Method 1] Found ${shredditPromoted.length} shreddit-post[is-promoted="true"]`);
+    console.log(`[RedditX] [Method 1] Found ${shredditPromoted.length} shreddit-post[is-promoted="true"]`);
     shredditPromoted.forEach(post => promoted.push(post));
 
     // Method 2: Look for promoted badge in post metadata
@@ -48,28 +48,28 @@ class RedditPromotedDetector {
     promotedBadges.forEach(container => {
       const textContent = container.textContent || '';
       if (textContent.includes('Promoted')) {
-        console.log('[Method 2] Found promoted post by text content');
+        console.log('[RedditX] [Method 2] Found promoted post by text content');
         promoted.push(container);
       }
     });
 
     // Method 3: Check for data-promoted attribute (old Reddit style)
     const dataPromoted = document.querySelectorAll('[data-promoted="true"]');
-    console.log(`[Method 3] Found ${dataPromoted.length} [data-promoted="true"]`);
+    console.log(`[RedditX] [Method 3] Found ${dataPromoted.length} [data-promoted="true"]`);
     dataPromoted.forEach(post => promoted.push(post));
 
     // Method 4: Check for promoted class
     const promotedClass = document.querySelectorAll('.promoted, .promotedlink');
-    console.log(`[Method 4] Found ${promotedClass.length} elements with .promoted or .promotedlink class`);
+    console.log(`[RedditX] [Method 4] Found ${promotedClass.length} elements with .promoted or .promotedlink class`);
     promotedClass.forEach(post => promoted.push(post));
 
     // Method 5: Check all shreddit-post elements for "Promoted" text in their content
     const allShredditPosts = document.querySelectorAll('shreddit-post');
-    console.log(`[Method 5] Checking ${allShredditPosts.length} shreddit-post elements for "Promoted" text`);
+    console.log(`[RedditX] [Method 5] Checking ${allShredditPosts.length} shreddit-post elements for "Promoted" text`);
     allShredditPosts.forEach(post => {
       const textContent = post.textContent || '';
       if (textContent.includes('Promoted')) {
-        console.log('[Method 5] Found promoted shreddit-post by text match');
+        console.log('[RedditX] [Method 5] Found promoted shreddit-post by text match');
         promoted.push(post);
       }
     });
