@@ -101,8 +101,12 @@ class RedditPromotedDetector {
 
     // Text content check (slower, do last)
     const textContent = element.textContent || '';
-    if (textContent.includes('Promoted')) return true;
-
+    if (textContent.includes('Promoted')) {
+      console.log('[RedditX] checkNewNodes: Found promoted node by .textContent scanning --> NOT BLOCKING FOR NOW', element);
+      // for now dont block!! as it is causing false positives
+      // return false;
+      //return true;
+    }
     return false;
   }
 
