@@ -84,6 +84,72 @@ class RedditPromotedDetector {
     return uniquePromoted;
   }
 
+  // Check if a single element is a promoted post
+  isPromotedPost(element) {
+    // Fast checks first
+    if (element.getAttribute('is-promoted') === 'true') return true;
+    if (element.getAttribute('data-promoted') === 'true') return true;
+    if (element.getAttribute('data-type') === 'ad') return true;
+    if (element.getAttribute('data-adclicklocation')) return true;
+
+    // Class checks
+    if (element.classList.contains('promoted')) return true;
+    if (element.classList.contains('promotedlink')) return true;
+
+    // Text content check (slower, do last)
+    const textContent = element.textContent || '';
+    if (textContent.includes('Promoted')) return true;
+
+    return false;
+  }
+
+  // Check only newly added nodes for promoted content
+  checkNewNodes(addedNodes) {
+    const promoted = [];
+
+    addedNodes.forEach(node => {
+      // Skip if not an element node
+      if (node.nodeType !== 1) return;
+
+      // Check if the node itself is promoted
+      if (this.isPromotedPost(node)) {
+        console.log('[RedditX] checkNewNodes: Found promoted node directly');
+        promoted.push(node);
+      }
+
+      // Check if it's a container that might have promoted posts inside
+      if (node.querySelectorAll) {
+        // Only query within this NEW node, not the whole page
+        const shredditPosts = node.querySelectorAll('shreddit-post');
+        shredditPosts.forEach(post => {
+          if (this.isPromotedPost(post)) {
+            console.log('[RedditX] checkNewNodes: Found promoted shreddit-post');
+            promoted.push(post);
+          }
+        });
+
+        // Check for other potential promoted containers
+        const containers = node.querySelectorAll('[data-testid="post-container"]');
+        containers.forEach(container => {
+          if (this.isPromotedPost(container)) {
+            console.log('[RedditX] checkNewNodes: Found promoted container');
+            promoted.push(container);
+          }
+        });
+
+        // Check for elements with promoted class
+        const promotedClass = node.querySelectorAll('.promoted, .promotedlink');
+        promotedClass.forEach(post => {
+          console.log('[RedditX] checkNewNodes: Found promoted by class');
+          promoted.push(post);
+        });
+      }
+    });
+
+    console.log(`[RedditX] checkNewNodes: Found ${promoted.length} promoted posts in ${addedNodes.length} new nodes`);
+    return promoted;
+  }
+
   // Extract post information
   extractPostInfo(postElement) {
     let title = '';
@@ -149,7 +215,7 @@ class RedditPromotedDetector {
   highlightPromotedPosts(posts) {
     posts.forEach(post => {
       if (!post.classList.contains('promoted-removed')) {
-        console.log('[RedditX] Removing promoted post:', post);
+        console.log('[RedditX] Removing promoted post:', post.outerHTML.substring(0, 100));
 
         // Store post info before removing
         const postInfo = this.extractPostInfo(post);
@@ -217,6 +283,8 @@ class RedditPromotedDetector {
 
   // Start observing for dynamically loaded content
   startObserver() {
+    console.log('[RedditX] starting MutationObserver for dynamic content');
+
     this.observer = new MutationObserver((mutations) => {
       // Check if new posts were added
       const addedNodes = [];
@@ -229,9 +297,12 @@ class RedditPromotedDetector {
       });
 
       if (addedNodes.length > 0) {
-        // Re-scan for promoted posts
-        const promoted = this.detectPromotedPosts();
-        this.highlightPromotedPosts(promoted);
+        // Only check the new nodes, not the entire page
+        const promoted = this.checkNewNodes(addedNodes);
+        if (promoted.length > 0) {
+          console.log(`[RedditX] MutationObserver: Processing ${promoted.length} promoted posts from new nodes`);
+          this.highlightPromotedPosts(promoted);
+        }
       }
     });
 
@@ -258,10 +329,10 @@ class RedditPromotedDetector {
     this.startObserver();
 
     // Periodic check to catch any missed posts
-    setInterval(() => {
-      const promoted = this.detectPromotedPosts();
-      this.highlightPromotedPosts(promoted);
-    }, 2000);
+    // setInterval(() => {
+    //   const promoted = this.detectPromotedPosts();
+    //   this.highlightPromotedPosts(promoted);
+    // }, 20000);
   }
 }
 
